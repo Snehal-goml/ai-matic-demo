@@ -1,0 +1,6 @@
+# Frontend deps for the AI Document Knowledge Assistant UI.
+streamlit>=1.40
+requests>=2.31
+
+# Optionally install the backend alongside:
+#   pip install -r ../requirements.txt

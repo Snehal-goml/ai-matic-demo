@@ -1,0 +1,40 @@
+# OpenTelemetry Collector: traces -> Jaeger + RED metrics -> Prometheus (Jaeger Monitor tab).
+# Used by docker-compose.otel-spm.yml
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+
+connectors:
+  spanmetrics:
+    histogram:
+      explicit:
+        buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2.5s, 5s, 10s]
+    # service.name is already a default dimension — do not add it again (collector will crash-loop).
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [spanmetrics, otlp/jaeger]
+    metrics:
+      receivers: [spanmetrics]
+      exporters: [prometheus]

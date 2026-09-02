@@ -1,0 +1,54 @@
+# Recommended local stack: Jaeger Search + Monitor (SPM).
+#
+#   app --OTLP:4317--> otel-collector --traces--> Jaeger (Search tab)
+#                    \--metrics--> Prometheus --> Jaeger (Monitor tab)
+#
+# Usage (from repo root):
+#   docker compose -f model_gateway/docker/docker-compose.otel-spm.yml up -d
+#
+# Jaeger UI: http://localhost:16686
+# App .env:  OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: goml-prometheus
+    volumes:
+      - ./prometheus-spm.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: goml-jaeger
+    volumes:
+      - ./jaeger-ui-config.json:/etc/jaeger/jaeger-ui.json:ro
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      QUERY_UI_CONFIG: /etc/jaeger/jaeger-ui.json
+      METRICS_STORAGE_TYPE: prometheus
+      PROMETHEUS_SERVER_URL: http://prometheus:9090
+      PROMETHEUS_QUERY_NORMALIZE_CALLS: "true"
+      PROMETHEUS_QUERY_NORMALIZE_DURATION: "true"
+      # Required when metrics come from OTel spanmetrics *connector* (not legacy processor)
+      PROMETHEUS_QUERY_SUPPORT_SPANMETRICS_CONNECTOR: "true"
+    ports:
+      - "16686:16686"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: goml-otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector-config-spm.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
+      - prometheus
+    restart: unless-stopped

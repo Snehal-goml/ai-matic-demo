@@ -1,0 +1,1 @@
+"""AIMatic IDP Template."""

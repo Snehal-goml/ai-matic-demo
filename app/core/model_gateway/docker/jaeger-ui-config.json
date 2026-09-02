@@ -1,0 +1,15 @@
+{
+  "monitor": {
+    "menuEnabled": true,
+    "docsLink": "https://www.jaegertracing.io/docs/1.57/deployment/spm/",
+    "emptyState": {
+      "mainTitle": "No RED metrics for the current filters",
+      "subTitle": "model_gateway records Server spans only",
+      "description": "In the Span Kind dropdown above, choose Server (not Consumer). Consumer shows no data for this app. After changing the filter, wait a few seconds for charts to load.",
+      "alert": {
+        "type": "warning",
+        "message": "Span Kind must be Server for goml-gateway. Consumer = empty charts."
+      }
+    }
+  }
+}
